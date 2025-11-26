@@ -10,6 +10,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Student registration service listening at http://localhost:${port}`);
 });
-
-
-// Sample lang po hehehe
