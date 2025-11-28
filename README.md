@@ -1,12 +1,12 @@
 # BSIT-4D-FINAL-PROJECT
-Microservices Student Portal Final Project - BSIT 4D
+Microservices Student Portal Final Project - BSIT 4B
 
 PROJECT WORKFLOW
 To avoid conflicts and broken code, follow these rules STRICTLY:
 
 1.  ALWAYS PULL BEFORE YOU DO ANYTHING:
     Before editing, adding, or deleting any file, run:
-    git pull origin main
+    "git pull origin main"
 
     This prevents conflicts and ensures your copy is up to date.
     If you skip this, your push may fail and you may overwrite other groups' work.
@@ -28,22 +28,24 @@ If you touch another group's code without permission = automatic conflict & erro
 3.  How to Add & Push Your Work
     After finishing your changes inside your assigned folder:
     Step 1 - Check Changes:
-    git status
-
+    "git status"
+    
+    If there are any changes pull first before moving to the rest of the step.
+    
     Step 2 — Add your changes:
-    git add .
-
+    "git add ."
+    
     Step 3 — Commit:
     git commit -m "Your update message"
     It is advisable to include date for the message
-
+    
     Step 4 — Push:
     git push origin main
 
 4.  IF YOU SEE AN ERROR WHEN PUSHING
     It means someone pushed while you were working.
     Fix it by running:
-        git pull origin main
+    "git pull origin main"
     Resolve any conflict (if needed), then push again.
 
 5.  DO NOT DO THE FOLLOWING:
@@ -56,7 +58,7 @@ If you touch another group's code without permission = automatic conflict & erro
     - Don’t run git add . inside another group’s folder
 
 6.  Communication Reminder:
-    Before making big changes:
-    Inform your group members
-    Inform the instructor if needed
-    Commit only when your code runs successfully
+    - Before making big changes:
+    - Inform your group members
+    - Inform the instructor if needed
+    - Commit only when your code runs successfully
