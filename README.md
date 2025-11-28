@@ -8,9 +8,10 @@ To avoid conflicts and broken code, follow these rules **STRICTLY**:
 
 ---
 
-### **1. ALWAYS PULL BEFORE YOU DO ANYTHING**
+### 1. ALWAYS PULL BEFORE YOU DO ANYTHING
 Before editing, adding, or deleting any file, run:
-"git pull origin main"
+
+git pull origin main
 
 This prevents conflicts and ensures your copy is up to date.  
 If you skip this, your push may fail and you may overwrite other groups' work.
