@@ -21,13 +21,14 @@ If you skip this, your push may fail and you may overwrite other groups' work.
 ### 2. WORK ONLY INSIDE YOUR GROUP’S FOLDER
 Each group has its own microservice:
 
-| Group | Microservice             | Folder Name              |
-|-------|---------------------------|---------------------------|
-| Group 1 | Authentication Service | Authentication-Services   |
-| Group 2 | Student Service        | Student-Services          |
-| Group 3 | Enrollment Service     | Enrollment-Services       |
-| Group 4 | Grade Service          | Grade-Services            |
-| Group 5 | Notification Service   | Notification-Services     |
+| Group    | Microservice           | Folder Name              |
+|----------|-------------------------|---------------------------|
+| Group 1  | Enrollment Service      | Enrollment-Services       |
+| Group 2  | Authentication Service  | Authentication-Services   |
+| Group 3  | Grade Service           | Grade-Services            |
+| Group 4  | Notification Service    | Notification-Services     |
+| Group 5  | Student Service         | Student-Services          |
+
 
 ❗ DO NOT edit files inside another group's folder.
 
