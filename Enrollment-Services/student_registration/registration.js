@@ -9,8 +9,8 @@ let students = [
   {
     id: "1",
     studentId: "STU2024001",
-    name: "John Doe",
-    email: "john.doe@university.edu",
+    name: "Russell Tadalan",
+    email: "russelltadalan@gmail.com",
     program: "Computer Science",
     enrollmentDate: "2024-01-15",
     status: "active",
