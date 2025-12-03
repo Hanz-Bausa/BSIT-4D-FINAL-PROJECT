@@ -1,28 +1,9 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const { readStudents, writeStudents } = require('../utils/fileStorage');
 
 const server = express();
 server.use(express.json());
-
-// In-memory storage for students
-let students = [
-  {
-    id: "1",
-    studentId: "STU2024001",
-    name: "Russell Tadalan",
-    email: "russelltadalan@gmail.com",
-    program: "Computer Science",
-    enrollmentDate: "2024-01-15",
-    status: "active",
-    semester: 1,
-    courses: ["CS101", "MATH101"]
-  }
-];
-
-// Utility functions
-const findStudentById = (id) => students.find(s => s.id === id);
-const findStudentByStudentId = (studentId) => students.find(s => s.studentId === studentId);
-const findStudentIndex = (id) => students.findIndex(s => s.id === id);
 
 // Validation middleware
 const validateStudent = (req, res, next) => {
@@ -73,6 +54,7 @@ const isValidEmail = (email) => {
 
 // Generate student ID
 const generateStudentId = () => {
+  const students = readStudents();
   const year = new Date().getFullYear();
   const sequence = students.length + 1;
   return `STU${year}${sequence.toString().padStart(3, '0')}`;
@@ -80,84 +62,59 @@ const generateStudentId = () => {
 
 // Health check endpoint
 server.get('/health', (req, res) => {
+  const students = readStudents();
   res.json({
     status: 'OK',
-    service: 'Student Registration Service - Enrollment Microservice',
+    service: 'Student Registration Service',
     timestamp: new Date().toISOString(),
     totalStudents: students.length,
     version: '1.0.0'
   });
 });
 
-// Get all students with optional filtering
+// Utility functions for finding students
+const findStudentById = (id, students) => students.find(s => s.id === id);
+const findStudentByStudentId = (studentId, students) => students.find(s => s.studentId === studentId);
+const findStudentIndex = (id, students) => students.findIndex(s => s.id === id);
+
+// -------------------- ROUTES --------------------
+
+// GET all students with optional filters
 server.get('/students', (req, res) => {
+  const students = readStudents();
   const { program, status, semester } = req.query;
 
-  let filteredStudents = [...students];
+  let filtered = [...students];
 
-  // Filter by program
-  if (program) {
-    filteredStudents = filteredStudents.filter(s =>
-      s.program?.toLowerCase().includes(program.toLowerCase())
-    );
-  }
+  if (program) filtered = filtered.filter(s => s.program?.toLowerCase().includes(program.toLowerCase()));
+  if (status) filtered = filtered.filter(s => s.status?.toLowerCase() === status.toLowerCase());
+  if (semester) filtered = filtered.filter(s => s.semester === parseInt(semester));
 
-  // Filter by status
-  if (status) {
-    filteredStudents = filteredStudents.filter(s =>
-      s.status?.toLowerCase() === status.toLowerCase()
-    );
-  }
-
-  // Filter by semester
-  if (semester) {
-    filteredStudents = filteredStudents.filter(s => s.semester === parseInt(semester));
-  }
-
-  res.json({
-    message: "Students retrieved successfully",
-    count: filteredStudents.length,
-    data: filteredStudents
-  });
+  res.json({ message: "Students retrieved successfully", count: filtered.length, data: filtered });
 });
 
-// Get student by ID
+// GET student by ID
 server.get('/students/:id', (req, res) => {
-  const id = req.params.id;
-  const student = findStudentById(id);
-
-  if (!student) {
-    return res.status(404).json({ error: "Student not found" });
-  }
-
-  res.json({
-    message: "Student retrieved successfully",
-    data: student
-  });
+  const students = readStudents();
+  const student = findStudentById(req.params.id, students);
+  if (!student) return res.status(404).json({ error: "Student not found" });
+  res.json({ message: "Student retrieved successfully", data: student });
 });
 
-// Get student by student ID
+// GET student by studentId
 server.get('/students/student-id/:studentId', (req, res) => {
-  const studentId = req.params.studentId;
-  const student = findStudentByStudentId(studentId);
-
-  if (!student) {
-    return res.status(404).json({ error: "Student not found" });
-  }
-
-  res.json({
-    message: "Student retrieved successfully",
-    data: student
-  });
+  const students = readStudents();
+  const student = findStudentByStudentId(req.params.studentId, students);
+  if (!student) return res.status(404).json({ error: "Student not found" });
+  res.json({ message: "Student retrieved successfully", data: student });
 });
 
-// Register new student
+// POST register new student
 server.post('/students/register', validateRequiredFields, (req, res) => {
+  const students = readStudents();
   const { name, email, program, semester, dateOfBirth, phone } = req.body;
 
-  // Check if email already exists
-  const existingStudent = students.find(s => s.email === email);
-  if (existingStudent) {
+  if (students.find(s => s.email === email)) {
     return res.status(409).json({ error: "Student with this email already exists" });
   }
 
@@ -178,26 +135,21 @@ server.post('/students/register', validateRequiredFields, (req, res) => {
   };
 
   students.push(newStudent);
+  writeStudents(students);
 
-  res.status(201).json({
-    message: "Student registered successfully",
-    data: newStudent
-  });
+  res.status(201).json({ message: "Student registered successfully", data: newStudent });
 });
 
-// Update student information (full update)
+// PUT update full student
 server.put('/students/:id', validateStudent, (req, res) => {
-  const id = req.params.id;
-  const studentIndex = findStudentIndex(id);
+  const students = readStudents();
+  const idx = findStudentIndex(req.params.id, students);
+  if (idx === -1) return res.status(404).json({ error: "Student not found" });
 
-  if (studentIndex === -1) {
-    return res.status(404).json({ error: "Student not found" });
-  }
-
+  const existing = students[idx];
   const { name, email, program, semester, status, phone } = req.body;
-  const existing = students[studentIndex];
 
-  const updatedStudent = {
+  const updated = {
     ...existing,
     name: name !== undefined ? name.trim() : existing.name,
     email: email !== undefined ? email.toLowerCase().trim() : existing.email,
@@ -208,185 +160,69 @@ server.put('/students/:id', validateStudent, (req, res) => {
     updatedAt: new Date().toISOString()
   };
 
-  students[studentIndex] = updatedStudent;
+  students[idx] = updated;
+  writeStudents(students);
 
-  res.json({
-    message: "Student information updated successfully",
-    data: updatedStudent
-  });
+  res.json({ message: "Student information updated successfully", data: updated });
 });
 
-// Partial update student information
+// PATCH partial update
 server.patch('/students/:id', validateStudent, (req, res) => {
-  const id = req.params.id;
-  const studentIndex = findStudentIndex(id);
+  const students = readStudents();
+  const idx = findStudentIndex(req.params.id, students);
+  if (idx === -1) return res.status(404).json({ error: "Student not found" });
 
-  if (studentIndex === -1) {
-    return res.status(404).json({ error: "Student not found" });
-  }
+  const existing = students[idx];
+  const updated = { ...existing, ...req.body, id: existing.id, studentId: existing.studentId, enrollmentDate: existing.enrollmentDate, updatedAt: new Date().toISOString() };
 
-  const existing = students[studentIndex];
-  const updatedStudent = {
-    ...existing,
-    ...req.body,
-    id: existing.id, // Prevent ID modification
-    studentId: existing.studentId, // Prevent student ID modification
-    enrollmentDate: existing.enrollmentDate, // Preserve enrollment date
-    updatedAt: new Date().toISOString()
-  };
+  if (req.body.name) updated.name = req.body.name.trim();
+  if (req.body.email) updated.email = req.body.email.toLowerCase().trim();
+  if (req.body.program) updated.program = req.body.program.trim();
 
-  // Trim string fields if they exist in update
-  if (req.body.name) updatedStudent.name = req.body.name.trim();
-  if (req.body.email) updatedStudent.email = req.body.email.toLowerCase().trim();
-  if (req.body.program) updatedStudent.program = req.body.program.trim();
+  students[idx] = updated;
+  writeStudents(students);
 
-  students[studentIndex] = updatedStudent;
-
-  res.json({
-    message: "Student information updated successfully",
-    data: updatedStudent
-  });
+  res.json({ message: "Student information updated successfully", data: updated });
 });
 
-// Delete student record
+// DELETE student
 server.delete('/students/:id', (req, res) => {
-  const id = req.params.id;
-  const studentIndex = findStudentIndex(id);
+  const students = readStudents();
+  const idx = findStudentIndex(req.params.id, students);
+  if (idx === -1) return res.status(404).json({ error: "Student not found" });
 
-  if (studentIndex === -1) {
-    return res.status(404).json({ error: "Student not found" });
-  }
+  const deleted = students.splice(idx, 1)[0];
+  writeStudents(students);
 
-  const deletedStudent = students.splice(studentIndex, 1)[0];
-
-  res.json({
-    message: "Student record deleted successfully",
-    data: deletedStudent
-  });
+  res.json({ message: "Student record deleted successfully", data: deleted });
 });
 
-// Search students by name, email, or program
+// Search students
 server.get('/students/search/:query', (req, res) => {
-  const query = req.params.query.toLowerCase();
+  const students = readStudents();
+  const q = req.params.query.toLowerCase();
 
-  const matchingStudents = students.filter(s =>
-    s.name.toLowerCase().includes(query) ||
-    s.email.toLowerCase().includes(query) ||
-    s.program.toLowerCase().includes(query) ||
-    s.studentId.toLowerCase().includes(query)
+  const results = students.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.email.toLowerCase().includes(q) ||
+    s.program.toLowerCase().includes(q) ||
+    s.studentId.toLowerCase().includes(q)
   );
 
-  res.json({
-    message: "Search completed successfully",
-    query: query,
-    count: matchingStudents.length,
-    data: matchingStudents
-  });
+  res.json({ message: "Search completed successfully", query: q, count: results.length, data: results });
 });
 
-// Get students by program
-server.get('/students/program/:program', (req, res) => {
-  const program = req.params.program.toLowerCase();
-
-  const programStudents = students.filter(s =>
-    s.program.toLowerCase() === program
-  );
-
-  res.json({
-    message: `Students in program '${program}' retrieved successfully`,
-    program: program,
-    count: programStudents.length,
-    data: programStudents
-  });
+// -------------------- 404 & Error --------------------
+server.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
 });
 
-// Get students by status
-server.get('/students/status/:status', (req, res) => {
-  const status = req.params.status.toLowerCase();
-
-  const statusStudents = students.filter(s =>
-    s.status.toLowerCase() === status
-  );
-
-  res.json({
-    message: `Students with status '${status}' retrieved successfully`,
-    status: status,
-    count: statusStudents.length,
-    data: statusStudents
-  });
-});
-
-// Update student status
-server.patch('/students/:id/status', (req, res) => {
-  const id = req.params.id;
-  const { status } = req.body;
-
-  const validStatuses = ['active', 'inactive', 'suspended', 'graduated', 'withdrawn'];
-
-  if (!status || !validStatuses.includes(status)) {
-    return res.status(400).json({
-      error: "Valid status is required",
-      validStatuses: validStatuses
-    });
-  }
-
-  const studentIndex = findStudentIndex(id);
-  if (studentIndex === -1) {
-    return res.status(404).json({ error: "Student not found" });
-  }
-
-  students[studentIndex].status = status;
-  students[studentIndex].updatedAt = new Date().toISOString();
-
-  res.json({
-    message: "Student status updated successfully",
-    data: students[studentIndex]
-  });
-});
-
-// Error handling middleware
 server.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: "Something went wrong in Student Registration Service!" });
-});
-
-// FIXED: 404 handler - use explicit path instead of '*'
-server.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found in Student Registration Service",
-    requestedPath: req.originalUrl,
-    availableEndpoints: {
-      "GET": [
-        "/health",
-        "/students",
-        "/students/:id",
-        "/students/student-id/:studentId",
-        "/students/search/:query",
-        "/students/program/:program",
-        "/students/status/:status"
-      ],
-      "POST": [
-        "/students/register"
-      ],
-      "PUT": [
-        "/students/:id"
-      ],
-      "PATCH": [
-        "/students/:id",
-        "/students/:id/status"
-      ],
-      "DELETE": [
-        "/students/:id"
-      ]
-    }
-  });
+  res.status(500).json({ error: "Something went wrong!" });
 });
 
 const port = process.env.PORT || 4000;
-server.listen(port, () => {
-  console.log(`Student Registration Service (Enrollment Microservice) is running on port ${port}`);
-  console.log(`Health check: http://localhost:${port}/health`);
-  console.log(`Students API: http://localhost:${port}/students`);
-});
+server.listen(port, () => console.log(`Server running on port ${port}`));
 
 module.exports = server;
