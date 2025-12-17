@@ -1,0 +1,11 @@
+{
+  "name": "student-microservices-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix class-offering-service\" \"npm run dev --prefix grade-service\" \"npm run dev --prefix payment-service\" \"npm run dev --prefix schedule-service\" \"npm run dev --prefix student-services\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}

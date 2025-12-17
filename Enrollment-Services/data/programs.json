@@ -1,0 +1,35 @@
+[
+  {
+    "id": "CS101",
+    "name": "Computer Science",
+    "description": "Bachelor of Science in Computer Science",
+    "duration": "4 years",
+    "credits_required": 120,
+    "available_seats": 50,
+    "is_active": true,
+    "created_at": "2025-12-17T01:01:09.721Z",
+    "updated_at": "2025-12-17T01:01:09.722Z"
+  },
+  {
+    "id": "BBA202",
+    "name": "Business Administration",
+    "description": "Bachelor of Business Administration",
+    "duration": "3 years",
+    "credits_required": 90,
+    "available_seats": 75,
+    "is_active": true,
+    "created_at": "2025-12-17T01:01:09.722Z",
+    "updated_at": "2025-12-17T01:01:09.722Z"
+  },
+  {
+    "id": "ENG303",
+    "name": "Electrical Engineering",
+    "description": "Bachelor of Engineering in Electrical",
+    "duration": "4 years",
+    "credits_required": 130,
+    "available_seats": 40,
+    "is_active": true,
+    "created_at": "2025-12-17T01:01:09.722Z",
+    "updated_at": "2025-12-17T01:01:09.722Z"
+  }
+]
