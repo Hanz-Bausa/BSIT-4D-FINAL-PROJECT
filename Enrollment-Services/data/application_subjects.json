@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": "ASUB-1765947237659-52TA",
+    "application_id": "APP-1765938917018-chm9",
+    "subject_code": "SIA2",
+    "preference_order": 1,
+    "is_approved": false,
+    "created_at": "2025-12-17T04:53:57.659Z",
+    "updated_at": "2025-12-17T04:53:57.659Z"
+  }
+]
