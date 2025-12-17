@@ -18,6 +18,9 @@ const JWT_SECRET = 'your-secret-key-here';
 // Enrollment Service URL (Group 1's service)
 const ENROLLMENT_SERVICE_URL = 'http://localhost:4000';
 
+// Notification Service URL (Group 5's service)
+const NOTIFICATION_SERVICE_URL = 'http://localhost:5004';
+
 // ============================================
 // MySQL DATABASE CONNECTION (XAMPP)
 // ============================================
@@ -148,6 +151,23 @@ async function getAllStudentsFromEnrollment() {
       { studentId: 'STU2024003', name: 'Pedro Reyes', email: 'pedro@student.edu', status: 'inactive' },
       { studentId: 'STU2024004', name: 'Ana Garcia', email: 'ana@student.edu', status: 'active' }
     ];
+  }
+}
+
+// Send notification to Notification Service
+async function sendAuthNotification(userId, event, metadata = {}) {
+  try {
+    const response = await fetch(`${NOTIFICATION_SERVICE_URL}/api/trigger/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, event, metadata })
+    });
+    if (response.ok) {
+      console.log(`📧 Notification sent: ${event} for ${userId}`);
+    }
+  } catch (error) {
+    // Don't let notification failures break auth flow
+    console.log(`⚠️  Notification service unavailable: ${error.message}`);
   }
 }
 
@@ -373,6 +393,12 @@ server.post('/auth/login', async (req, res) => {
   const validPassword = await bcrypt.compare(password, passwordRecord.password_hash);
   if (!validPassword) {
     await logLoginActivity(student_id, 'failed', 'Invalid password', req);
+    // Send notification for failed login
+    await sendAuthNotification(student_id, 'LOGIN_FAILED', {
+      reason: 'Invalid password',
+      ip_address: req.ip || '127.0.0.1',
+      timestamp: new Date().toISOString()
+    });
     return res.status(401).json({
       success: false,
       error: 'Invalid credentials'
@@ -399,6 +425,13 @@ server.post('/auth/login', async (req, res) => {
 
   // Log successful login
   await logLoginActivity(student_id, 'success', 'Login successful', req);
+
+  // Send notification for successful login
+  await sendAuthNotification(student_id, 'LOGIN_SUCCESS', {
+    ip_address: req.ip || '127.0.0.1',
+    device: req.headers['user-agent'] || 'Unknown',
+    timestamp: new Date().toISOString()
+  });
 
   res.json({
     success: true,
@@ -529,6 +562,11 @@ server.put('/auth/password/change', authenticateToken, async (req, res) => {
     );
   }
 
+  // Send notification for password change
+  await sendAuthNotification(req.user.student_id, 'PASSWORD_CHANGED', {
+    timestamp: new Date().toISOString()
+  });
+
   res.json({
     success: true,
     message: 'Password changed successfully',
@@ -638,6 +676,11 @@ server.put('/auth/password/reset', async (req, res) => {
     // Remove used reset token
     await db.query('DELETE FROM reset_tokens WHERE token = ?', [reset_token]);
   }
+
+  // Send notification for password reset
+  await sendAuthNotification(tokenRecord.student_id, 'PASSWORD_RESET', {
+    timestamp: new Date().toISOString()
+  });
 
   res.json({
     success: true,
@@ -757,6 +800,7 @@ server.get('/auth/login-activity', async (req, res) => {
 server.get('/health', async (req, res) => {
   let dbStatus = 'disconnected';
   let enrollmentStatus = 'unknown';
+  let notificationStatus = 'unknown';
 
   // Check database
   if (db) {
@@ -776,12 +820,21 @@ server.get('/health', async (req, res) => {
     enrollmentStatus = 'disconnected';
   }
 
+  // Check Notification Service
+  try {
+    const response = await fetch(`${NOTIFICATION_SERVICE_URL}/health`);
+    notificationStatus = response.ok ? 'connected' : 'error';
+  } catch (e) {
+    notificationStatus = 'disconnected';
+  }
+
   res.json({
     success: true,
     service: 'Authentication Microservice',
     port: port,
     database: dbStatus,
     enrollment_service: enrollmentStatus,
+    notification_service: notificationStatus,
     timestamp: new Date().toISOString()
   });
 });
