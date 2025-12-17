@@ -1,0 +1,38 @@
+[
+  {
+    "id": "MATH101",
+    "name": "Calculus I",
+    "credits": 3,
+    "program_id": "CS101",
+    "is_active": true,
+    "created_at": "2025-12-17T01:01:09.722Z",
+    "updated_at": "2025-12-17T01:01:09.722Z"
+  },
+  {
+    "id": "PROG101",
+    "name": "Introduction to Programming",
+    "credits": 4,
+    "program_id": "CS101",
+    "is_active": true,
+    "created_at": "2025-12-17T01:01:09.722Z",
+    "updated_at": "2025-12-17T01:01:09.722Z"
+  },
+  {
+    "id": "BUS101",
+    "name": "Principles of Management",
+    "credits": 3,
+    "program_id": "BBA202",
+    "is_active": true,
+    "created_at": "2025-12-17T01:01:09.722Z",
+    "updated_at": "2025-12-17T01:01:09.722Z"
+  },
+  {
+    "id": "EE101",
+    "name": "Circuit Theory",
+    "credits": 4,
+    "program_id": "ENG303",
+    "is_active": true,
+    "created_at": "2025-12-17T01:01:09.722Z",
+    "updated_at": "2025-12-17T01:01:09.722Z"
+  }
+]
